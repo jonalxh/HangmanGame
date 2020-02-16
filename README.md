@@ -1,4 +1,4 @@
-# Hangman Game (hangman)
+# Hangman Game (Ahorcado)
 
 Basic Hangman Game made with Quasar Framework
 
