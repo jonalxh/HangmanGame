@@ -1,6 +1,7 @@
 <template>
   <q-page class="flex flex-center column row">
     <span id="attempts">Intentos disponibles: {{ attempts }}</span>
+    <span id="time">Tiempo: {{ time | formatTime }}</span>
     <span class="q-mb-xl" id="clue" size="lg"> Pista: {{ clue }} </span>
     <div
       class="full-width row inline wrap justify-evenly items-center content-center q-mt-xl"
@@ -18,7 +19,7 @@
         label="Ingresa una letra"
         class="q-mt-xl q-mx-auto"
         @input="tryLetter()"
-        focused
+        autofocus
       />
     </div>
 
@@ -39,12 +40,14 @@
         icon="replay"
         rounded
         :label="$q.screen.gt.xs ? 'Reiniciar' : void 0"
+        @click="restartGame()"
       />
       <q-btn
         color="warning"
         icon="pause"
         rounded
         :label="$q.screen.gt.xs ? 'Pausar' : void 0"
+        @click="pauseGame()"
       />
       <q-btn
         color="deep-orange"
@@ -63,14 +66,15 @@ export default {
     return {
       attempts: 3,
       clue: "Se puede encontrar fácilmente en los bosques",
-      confirm: false,
-      spaces: [],
-      letter: "",
-      lastLetter: "",
-      word: "ARBOL",
       existingLetters: [],
       failedLetters: [],
-      id: new Date()
+      game: {},
+      id: new Date(),
+      letter: "",
+      lastLetter: "",
+      spaces: [],
+      time: 0,
+      word: "ARBOL",
     };
   },
   methods: {
@@ -90,6 +94,7 @@ export default {
         } else {
           this.failedLetters.push(lett);
           this.attempts--;
+          this.showError(lett)
         }
         this.checkCompletion();
       }
@@ -126,13 +131,74 @@ export default {
         message: "¡Muy bien!",
         caption: "La letra <b>" + letter + "</b> hace parte de la palabra",
         icon: "check",
-        color: "secondary",
-        html: true
+        type: 'positive',
+        html: true,
+        position: 'top',
+        group: 'success-group',
+        progress: true,
+        timeout: 10000
       });
+    },
+    showError(letter) {
+      this.$q.notify({
+        message: "Lo siento :(",
+        caption: "La letra <b>" + letter + "</b> no existe en la palabra",
+        icon: "error_outline",
+        type: 'negative',
+        html: true,
+        position: 'top',
+        group: 'error-group',
+        progress: true,
+        timeout: 10000
+      });
+    },
+    startTimer() {
+      this.timer = setInterval(_ => {
+        this.time++;
+      }, 1000)
+    },
+    stopTimer() {
+      clearInterval(this.timer);
+    },
+    pauseGame() {
+      this.stopTimer()
+      this.$q
+          .dialog({
+            title: "Juego pausado",
+            message: "Presiona OK para reanudar",
+            cancel: false,
+            persistent: true
+          })
+          .onOk(() => {
+            this.startTimer()
+          });
+    },
+    restartGame() {
+      this.$q
+          .dialog({
+            title: "¿Estás seguro de reiniciar la partida?",
+            message: "Perderás todas las letras que has acertado.",
+            cancel: false,
+            persistent: true
+          })
+          .onOk(() => {
+            location.reload()
+          });
     }
+  },
+  filters: {
+    formatTime(seconds) {
+      return new Date(seconds * 1000).toISOString().substr(11, 8);
+    }
+  },
+  created() {
+    this.startTimer()
   },
   beforeMount() {
     this.graphWordSpaces();
+  },
+  beforeDestroy() {
+    this.stopTimer()
   }
 };
 </script>
@@ -143,6 +209,11 @@ export default {
   position: absolute;
   top: 1em;
   left: 1em;
+}
+#time {
+  position: absolute;
+  top: 1em;
+  right: 1em;
 }
 .letter {
   width: 150px;

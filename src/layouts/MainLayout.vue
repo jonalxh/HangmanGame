@@ -12,7 +12,7 @@
         />
 
         <q-toolbar-title>
-          Ahorcado
+          Hangman Game
         </q-toolbar-title>
 
       </q-toolbar>
